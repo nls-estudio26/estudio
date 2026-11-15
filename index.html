@@ -219,6 +219,8 @@ h2{font:700 20px "Barlow Condensed","Arial Narrow",sans-serif;margin:0 0 8px}
 <p class="mu" style="margin-top:0;font-size:14px">Pega líneas con el formato 2024-03-15,17,05 (año-mes-día, día, noche). Si falta un turno, déjalo vacío. Las fechas que ya existen se reemplazan.</p>
 <textarea id="imp" placeholder="2024-03-15,17,05"></textarea>
 <button class="btn" id="importar" style="margin-top:8px">Importar</button>
+<p class="mu" style="font-size:14px;margin:12px 0 6px">O elige el archivo de la copia directamente (sin copiar y pegar):</p>
+<input type="file" id="fimp" accept=".txt,text/plain,text/*" style="width:100%;font-size:15px">
 <p class="msg" id="msg3" aria-live="polite"></p>
 </div>
 </section>
@@ -944,20 +946,22 @@ $('copiar').addEventListener('click',function(){
   say('msg2',ok?'Copiado. Si no pega, mantén pulsado el texto y elige Copiar.':'Mantén pulsado el texto y elige Copiar.',ok?'ok':'err');
 });
 $('importar').addEventListener('click',function(){
-  var lines=$('imp').value.split(/\r?\n/),ok=0,bad=[];
+  var lines=$('imp').value.split(/\r?\n/),ok=0,bad=[],firstBad='';
   lines.forEach(function(l,i){
     l=l.trim();if(!l)return;
     var p=l.split(/[,;\t]/).map(function(s){return s.trim()});
-    var k=p[0],d=p[1]?pad(p[1]):null,n=p[2]?pad(p[2]):null;
-    if(!validKey(k)||(p[1]&&d===null)||(p[2]&&n===null)||(!d&&!n)||(d&&!enGrupo(d))||(n&&!enGrupo(n))){bad.push(i+1);return}
+    var k=p[0],m=/^(\d{1,2})[-\/.](\d{1,2})[-\/.](\d{4})$/.exec(k);if(m)k=m[3]+'-'+('0'+m[2]).slice(-2)+'-'+('0'+m[1]).slice(-2);var d=p[1]?pad(p[1]):null,n=p[2]?pad(p[2]):null;
+    if(!validKey(k)||(p[1]&&d===null)||(p[2]&&n===null)||(!d&&!n)||(d&&!enGrupo(d))||(n&&!enGrupo(n))){bad.push(i+1);if(bad.length===1)firstBad=l;return}
     data[k]={d:d,n:n};ok++;
   });
   if(ok&&!save()){say('msg3','No se pudo guardar en este navegador.','err');return}
   renderUltimos();fillFields();renderDatos();
-  if(bad.length)say('msg3',ok+' importados. Revisa las líneas: '+bad.slice(0,10).join(', ')+(bad.length>10?'…':'')+'.','err');
+  if(bad.length)say('msg3',ok+' importados. Revisa las líneas: '+bad.slice(0,10).join(', ')+(bad.length>10?'…':'')+'. La primera dice: «'+firstBad.slice(0,40)+'». (Cada línea debe ser fecha, día, noche, solo con números de los dos grupos.)','err');
   else if(ok){say('msg3',ok+' días importados.','ok');$('imp').value=''}
   else say('msg3','No hay nada que importar.','err');
 });
+
+$('fimp').addEventListener('change',function(){var f=this.files&&this.files[0];if(!f)return;var r=new FileReader();r.onload=function(){$('imp').value=String(r.result||'');$('importar').click();$('fimp').value=''};r.onerror=function(){say('msg3','No se pudo leer el archivo.','err')};r.readAsText(f)});
 
 /* carga rápida por mes */
 function mesKey(d){var m=+$('mesM').value,y=+$('anoM').value;return y+'-'+(m<10?'0':'')+m+'-'+(d<10?'0':'')+d}
