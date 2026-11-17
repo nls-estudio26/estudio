@@ -118,6 +118,7 @@ h2{font:700 20px "Barlow Condensed","Arial Narrow",sans-serif;margin:0 0 8px}
 <button role="tab" data-t="todos" aria-selected="false">Todos</button>
 <button role="tab" data-t="calientes" aria-selected="false">Días sin salir</button>
 <button role="tab" data-t="combinado" aria-selected="false">Combinado</button>
+<button role="tab" data-t="analisis" aria-selected="false">Análisis</button>
 <button role="tab" data-t="prueba" aria-selected="false">Prueba</button>
 <button role="tab" data-t="datos" aria-selected="false">Datos</button>
 </nav>
@@ -193,6 +194,12 @@ h2{font:700 20px "Barlow Condensed","Arial Narrow",sans-serif;margin:0 0 8px}
 <details class="how"><summary><span>ℹ️ Cómo funciona y qué significa cada color</span></summary><p>Elige una fecha y un turno. Junta las señales de todas tus búsquedas (atrasados, bloque de 5 días, mismo día del mes, misma fecha en otros años, alrededor y estimado) y muestra qué números coinciden en más de una. Es solo para estudiar coincidencias.</p><ul><li><span class="sw ne">Neutro</span><span>Cada señal que tiene un número.</span></li><li><span class="sw fu">Rojo</span><span>Atrasado: ya se pasó de su salida normal.</span></li><li><span class="sw de">Verde</span><span>En su rango: está dentro de su salida normal.</span></li><li><span class="sw g1">Turquesa</span><span>Grupo 1: su botón y sus números.</span></li><li><span class="sw g2">Rosa</span><span>Grupo 2: su botón y sus números.</span></li></ul></details>
 <div class="card two"><div><label for="fK">Fecha a analizar</label><input type="date" id="fK"></div><div><label for="tK">Turno</label><select id="tK"><option value="a">Día y noche</option><option value="d">Solo día</option><option value="n">Solo noche</option></select></div></div>
 <div class="card" id="resK"></div>
+</section>
+
+<section id="analisis">
+<details class="how"><summary><span>ℹ️ Cómo funciona y qué significa cada color</span></summary><p>Para cada grupo, junta las señales de las demás pestañas (Atrasados, bloque de 5 días, mismo día del mes, misma fecha en otros años, alrededor y estimado de repetición) y muestra los números que más señales juntan para la fecha elegida. Por defecto es el próximo día a cargar. Estos son números para observar y estudiar.</p><ul><li><span class="sw fu">Rojo</span><span>Atrasado: ya pasó su salida normal.</span></li><li><span class="sw de">Verde</span><span>Dentro de su salida normal.</span></li><li><span class="sw fa">Celeste</span><span>Todavía no llega a su salida normal.</span></li><li><span class="sw po">Gris</span><span>Pocos datos.</span></li><li><span class="sw ne" style="color:var(--g1)">Turquesa</span><span>Grupo 1.</span></li><li><span class="sw ne" style="color:var(--g2)">Rosa</span><span>Grupo 2.</span></li></ul></details>
+<div class="card two"><div><label for="fA">Fecha a analizar</label><input type="date" id="fA"></div><div><label for="tA">Turno</label><select id="tA"><option value="a">Día y noche</option><option value="d">Solo día</option><option value="n">Solo noche</option></select></div></div>
+<div class="card" id="resA"></div>
 </section>
 
 <section id="prueba">
@@ -487,6 +494,7 @@ function show(t){
   if(t==='numero')buscarNumero();
   if(t==='calientes')renderCal();
   if(t==='combinado')renderComb();
+  if(t==='analisis')renderAna();
   if(t==='prueba'&&!pBusy)$('resP').innerHTML='<div class="empty">Toca "Probar". Puede tardar unos segundos.</div>';
   if(t==='mes')renderMes();
   if(t==='todos'){llenarFiltroT();renderTodos()}
@@ -918,6 +926,91 @@ function renderComb(){
   h+='<p class="mu" style="font-size:13px;margin-top:12px">Más señales juntas solo quiere decir que más de tus estudios apuntan al mismo número. Con tantos números, muchas coinciden por casualidad, y cada sorteo es independiente: no garantiza que salga.</p>';
   box.innerHTML=h;
 }
+function anaCalc(T,t){
+  var ks=Object.keys(V).sort(),u=ultK();
+  if(!ks.length)return null;
+    u=shiftDay(T,-1);var dd=T.slice(8,10),md=T.slice(5,10),bt=bl(T),TD=fromIso(T);
+  var moB=[{},{},{},{},{},{}],dm={},yd={},pr={};
+  function vals(e){var r=[];if(t!=='n'&&e.d)r.push(e.d);if(t!=='d'&&e.n)r.push(e.n);return r}
+  function add(a,c){var x=a<c?a+'|'+c:c+'|'+a;pr[x]=(pr[x]||0)+1}
+  ks.forEach(function(k){
+    var e=V[k],ym=k.slice(0,7),bb=bl(k),kd=k.slice(8,10),km=k.slice(5,10),yr=k.slice(0,4),me=cellNums(k);
+    vals(e).forEach(function(v){
+      moB[bb][v]=moB[bb][v]||{};moB[bb][v][ym]=1;
+      if(kd===dd)dm[v]=(dm[v]||0)+1;
+      if(km===md){yd[v]=yd[v]||{};yd[v][yr]=1}
+    });
+    if(e.d&&e.n)add(e.d,e.n);
+    [shiftDay(k,1),shiftMon(k,1),shiftYr(k,1)].forEach(function(o){cellNums(o).forEach(function(c){me.forEach(function(a){add(a,c)})})});
+  });
+  function topBl(i){var c={};Object.keys(moB[i]).forEach(function(v){c[v]=Object.keys(moB[i][v]).length});return topN(c,2).slice(0,8).map(function(v){return {v:v,m:c[v]}})}
+  function nY(v){return yd[v]?Object.keys(yd[v]).length:0}
+  var nbs=[],seen={};
+  [shiftDay(T,-1),shiftMon(T,-1),shiftYr(T,-1)].forEach(function(o){cellNums(o).forEach(function(a){if(!seen[a]){seen[a]=1;nbs.push(a)}})});
+  function par(q){var best=null;nbs.forEach(function(a){var x=a<q?a+'|'+q:q+'|'+a,c=pr[x]||0;if(c>0&&(!best||c>best.c))best={a:a,c:c}});return best}
+  var items=[],stMap={};
+  for(var i=0;i<100;i++){
+    var q=(i<10?'0':'')+i;if(!enVista(q))continue;
+    var arr=ks.filter(function(k){var e=V[k];return (t!=='n'&&e.d===q)||(t!=='d'&&e.n===q)});
+    var o={q:q,c:arr.length,sg:[]};
+    var st=calSt(arr,u);
+    if(st){
+      var g2=gaps(arr),so2=g2.slice().sort(function(a,b){return a-b});
+      st.p=so2.filter(function(x){return x<=st.lv}).length/so2.length;
+      st.r=st.lv/Math.max(1,st.hi);
+      var s2=stats(g2),nd=fromIso(arr[arr.length-1]);nd.setDate(nd.getDate()+Math.round(s2.av));
+      var dx=Math.round((nd-TD)/864e5);
+      if(Math.abs(dx)<=1)o.sg.push('Por promedio: '+fmt(iso(nd)));
+      o.st=st;stMap[q]=st;
+    }
+    items.push(o);
+  }
+  items.filter(function(o){return o.st&&o.st.s==='a'}).sort(function(a,b){return b.st.r-a.st.r}).slice(0,5).forEach(function(o){o.sg.push('Atrasado ('+(o.st.lv-o.st.hi)+' d de más)')});
+  var bmap={};topBl(bt).forEach(function(x){bmap[x.v]=x.m});
+  var dmTop=topN(dm,2).slice(0,5);
+  var pv=Object.keys(pr).map(function(x){return pr[x]}),pn=pv.length||1,av=pv.reduce(function(s,x){return s+x},0)/pn,sd=Math.sqrt(pv.reduce(function(s,x){return s+(x-av)*(x-av)},0)/pn),thr=av+sd;
+  items.forEach(function(o){
+    var q=o.q;
+    if(bmap[q])o.sg.push('Bloque '+BL[bt]+': '+bmap[q]+' meses');
+    if(dmTop.indexOf(q)>=0)o.sg.push('Día '+(+dd)+' del mes: '+dm[q]+' veces');
+    if(nY(q)>=2)o.sg.push('Mismo '+(+md.slice(3))+' de '+MES[+md.slice(0,2)-1]+': '+nY(q)+' años');
+    var p=par(q);if(p&&p.c>=thr)o.sg.push('Sale junto al '+p.a+' (×'+p.c+')');
+  });
+  var ord=items.filter(function(o){return o.sg.length>=2}).sort(function(a,b){return b.sg.length-a.sg.length||b.c-a.c||(a.q<b.q?-1:1)});
+  return {ord:ord,items:items,stMap:stMap,bt:bt,u:u,T:T};
+}
+var aTouched=false;
+function renderAna(){
+  var t=$('tA').value,box=$('resA'),ll=lastLoaded();
+  if(!ll){box.innerHTML='<div class="empty">Aún no hay datos cargados.</div>';return}
+  if(!aTouched||!validKey($('fA').value))$('fA').value=(shiftDay(ll,1)>ultK())?shiftDay(ll,1):ultK();
+  var T=$('fA').value,keep=grp,h='';
+  try{
+    [1,2].forEach(function(g){
+      grp=String(g);buildV();
+      var r=anaCalc(T,t);
+      h+='<h2 class="gh g'+g+'">Grupo '+g+'</h2>';
+      if(!r){h+='<p class="mu">Aún no hay datos de este grupo.</p>';return}
+      if(g===1)h='<p class="sum">Fecha: <b>'+fmt(T)+'</b> · Bloque de días '+BL[r.bt]+'. Se cuentan los días hasta el '+fmt(r.u)+'.</p>'+h;
+      var top=r.ord.slice(0,10);
+      h+=top.length?top.map(function(o){
+        var s=o.st,cl='po',tx='Pocos datos: menos de '+MINAP+' apariciones.';
+        if(s){
+          if(s.s==='a'){cl='fu';tx='Atrasado: lleva <b>'+s.lv+'</b> días, su salida normal es cada '+(s.lo===s.hi?s.lo:s.lo+' a '+s.hi)+' días.'}
+          else if(s.s==='c'){cl='de';tx='Dentro de su salida normal: lleva <b>'+s.lv+'</b> días (cada '+(s.lo===s.hi?s.lo:s.lo+' a '+s.hi)+' días).'}
+          else{cl='fa';tx='Todavía no llega a su salida normal: lleva <b>'+s.lv+'</b> días (cada '+(s.lo===s.hi?s.lo:s.lo+' a '+s.hi)+' días).'}
+        }
+        return '<div class="hit st '+cl+'" style="display:block"><div style="display:flex;justify-content:space-between;gap:8px;align-items:center"><span class="num">'+o.q+'</span><span class="mu">'+o.sg.length+' señales</span></div><div class="mu" style="font-size:13px;margin-top:2px">'+tx+'</div><div style="margin-top:4px">'+o.sg.map(function(x){return '<span class="rep'+(x.indexOf('Atrasado')===0?' fu':'')+'">'+x+'</span>'}).join('')+'</div></div>';
+      }).join(''):'<p class="mu">Ningún número junta 2 señales o más con los datos actuales.</p>';
+      var uno=r.items.filter(function(o){return o.sg.length===1}).length;
+      if(uno)h+='<p class="mu" style="font-size:13px">'+uno+' números más tienen 1 sola señal.</p>';
+    });
+  }catch(e){h='<div class="empty">No se pudo completar el análisis.</div>'}
+  grp=keep;buildV();
+  box.innerHTML=h;
+}
+$('fA').addEventListener('change',function(){aTouched=true;renderAna()});
+$('tA').addEventListener('change',renderAna);
 $('fK').addEventListener('change',function(){kTouched=true;renderComb()});
 $('tK').addEventListener('change',renderComb);
 
@@ -1032,6 +1125,7 @@ function refrescaV(){
   if(cur==='fecha'){llenarAnios();buscarFecha()}
   if(cur==='calientes')renderCal();
   if(cur==='combinado')renderComb();
+  if(cur==='analisis')renderAna();
   if(cur==='prueba'&&!pBusy)$('resP').innerHTML='<div class="empty">Toca "Probar". Puede tardar unos segundos.</div>';
   if(cur==='datos')renderDatos();
 }
