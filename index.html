@@ -180,7 +180,7 @@ h2{font:700 20px "Barlow Condensed","Arial Narrow",sans-serif;margin:0 0 8px}
 <section id="salen">
 <details class="how"><summary><span>ℹ️ Cómo funciona y qué significa cada color</span></summary><p>Escribe un número. La app busca cada vez que salió y mira 4 lugares: el mismo día (el otro turno), el día siguiente, la misma fecha del mes siguiente y la misma fecha del mes anterior. Cuenta con cuántos números coincidió y solo muestra los que coinciden el mínimo de veces que elijas (por defecto 4). Cada número cuenta una sola vez por cada salida del tuyo.</p><ul><li><span class="sw ne">Número grande</span><span>El número que salió cerca del que escribiste.</span></li><li><span class="sw ne">Veces</span><span>En cuántas salidas de tu número apareció cerca.</span></li><li><span class="sw po">Gris</span><span>Dónde coincidió: mismo día, día siguiente, mes siguiente o mes anterior.</span></li><li><span class="sw ne" style="color:var(--g1)">Turquesa</span><span>Grupo 1.</span></li><li><span class="sw ne" style="color:var(--g2)">Rosa</span><span>Grupo 2.</span></li></ul></details>
 <div class="card two"><div><label for="qC">Número (00 a 99)</label><input id="qC" inputmode="numeric" maxlength="2" placeholder="Ej. 10" autocomplete="off"></div><div><label for="mC">Mínimo de veces</label><select id="mC"><option value="3">3</option><option value="4" selected>4</option><option value="5">5</option><option value="6">6</option><option value="8">8</option></select></div></div>
-<div class="card" id="resC"><div class="empty">Escribe un número para ver con cuáles sale.</div></div>
+<div class="card" id="resCon"><div class="empty">Escribe un número para ver con cuáles sale.</div></div>
 </section>
 
 <section id="fecha">
@@ -1108,7 +1108,7 @@ $('mR').addEventListener('change',renderRa);
 
 /* salen con */
 function renderCon(){
-  var box=$('resC'),raw=$('qC').value.trim(),min=+$('mC').value||4;
+  var box=$('resCon'),raw=$('qC').value.trim(),min=+$('mC').value||4;
   if(!raw){box.innerHTML='<div class="empty">Escribe un número para ver con cuáles sale.</div>';return}
   if(!/^\d{1,2}$/.test(raw)){box.innerHTML='<div class="empty">Escribe un número de uno o dos dígitos.</div>';return}
   var q=raw.length===1?'0'+raw:raw,g=grupo(q);
