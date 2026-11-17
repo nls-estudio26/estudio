@@ -130,6 +130,7 @@ h2{font:700 20px "Barlow Condensed","Arial Narrow",sans-serif;margin:0 0 8px}
 <button role="tab" data-t="fecha" aria-selected="false">Fecha</button>
 <button role="tab" data-t="todos" aria-selected="false">Todos</button>
 <button role="tab" data-t="calientes" aria-selected="false">Días sin salir</button>
+<button role="tab" data-t="rachas" aria-selected="false">Rachas</button>
 <button role="tab" data-t="combinado" aria-selected="false">Combinado</button>
 <button role="tab" data-t="analisis" aria-selected="false">Análisis</button>
 <button role="tab" data-t="prueba" aria-selected="false">Prueba</button>
@@ -214,6 +215,12 @@ h2{font:700 20px "Barlow Condensed","Arial Narrow",sans-serif;margin:0 0 8px}
 <details class="how"><summary><span>ℹ️ Cómo funciona y qué significa cada color</span></summary><p>Elige una fecha y un turno. Junta las señales de todas tus búsquedas (atrasados, bloque de 5 días, mismo día del mes, misma fecha en otros años, alrededor y estimado) y muestra qué números coinciden en más de una. Es solo para estudiar coincidencias.</p><ul><li><span class="sw ne">Neutro</span><span>Cada señal que tiene un número.</span></li><li><span class="sw fu">Rojo</span><span>Atrasado: ya se pasó de su salida normal.</span></li><li><span class="sw de">Verde</span><span>En su rango: está dentro de su salida normal.</span></li><li><span class="sw g1">Turquesa</span><span>Grupo 1: su botón y sus números.</span></li><li><span class="sw g2">Rosa</span><span>Grupo 2: su botón y sus números.</span></li></ul></details>
 <div class="card two"><div><label for="fK">Fecha a analizar</label><input type="date" id="fK"></div><div><label for="tK">Turno</label><select id="tK"><option value="a">Día y noche</option><option value="d">Solo día</option><option value="n">Solo noche</option></select></div></div>
 <div class="card" id="resK"></div>
+</section>
+
+<section id="rachas">
+<details class="how"><summary><span>ℹ️ Cómo funciona y qué significa cada color</span></summary><p>Cuenta los días seguidos en que no salió ningún número del grupo que elegiste arriba (Grupo 1, Grupo 2 o Los dos). Cada mes se cuenta solo: una racha no pasa de un mes a otro, y en un mismo mes puede haber varias. Si un grupo no salió desde el día 1 hasta su primera salida del mes, o desde su última salida hasta fin de mes, también cuenta. En el mes actual se cuenta hasta hoy. Abajo está el récord: la racha más larga, la más corta que cuenta y cuántas veces se repite cada cantidad.</p><ul><li><span class="sw fu">Rojo</span><span>Racha igual a la más larga de todas (el récord).</span></li><li><span class="sw po">Gris</span><span>Las demás rachas.</span></li><li><span class="sw ne" style="color:var(--g1)">Turquesa</span><span>Grupo 1.</span></li><li><span class="sw ne" style="color:var(--g2)">Rosa</span><span>Grupo 2.</span></li></ul></details>
+<div class="card two"><div><label for="tR">Turno</label><select id="tR"><option value="a">Día y noche</option><option value="d">Solo día</option><option value="n">Solo noche</option></select></div><div><label for="mR">Mínimo de días</label><select id="mR"><option value="3">3</option><option value="4" selected>4</option><option value="5">5</option><option value="6">6</option><option value="7">7</option></select></div></div>
+<div class="card" id="resR"><div class="empty">Cargando…</div></div>
 </section>
 
 <section id="analisis">
@@ -519,6 +526,7 @@ function show(t){
   if(t==='combinado')renderComb();
   if(t==='analisis')renderAna();
   if(t==='salen')renderCon();
+  if(t==='rachas')renderRa();
   if(t==='prueba'&&!pBusy)$('resP').innerHTML='<div class="empty">Toca "Probar". Puede tardar unos segundos.</div>';
   if(t==='mes')renderMes();
   if(t==='todos'){llenarFiltroT();renderTodos()}
@@ -1044,6 +1052,60 @@ $('tK').addEventListener('change',renderComb);
 
 
 
+
+/* rachas */
+function mesCap(ym){var n=MES[+ym.slice(5,7)-1];return n.charAt(0).toUpperCase()+n.slice(1)+' '+ym.slice(0,4)}
+function mesCorto(ym){return MES[+ym.slice(5,7)-1].slice(0,3)+' '+ym.slice(2,4)}
+function rachasCalc(t){
+  var ks=Object.keys(data).sort();if(!ks.length)return null;
+  var first=ks[0],endK=ultK(),res=[];
+  var y=+first.slice(0,4),mo=+first.slice(5,7),ey=+endK.slice(0,4),em=+endK.slice(5,7);
+  while(y<ey||(y===ey&&mo<=em)){
+    var ym=y+'-'+(mo<10?'0':'')+mo,d0=1,d1=new Date(y,mo,0).getDate();
+    if(ym===first.slice(0,7))d0=+first.slice(8,10);
+    if(ym===endK.slice(0,7))d1=+endK.slice(8,10);
+    var runs=[],st=0;
+    for(var d=d0;d<=d1;d++){
+      var k=ym+'-'+(d<10?'0':'')+d,e=V[k],hit=!!e&&((t!=='n'&&e.d)||(t!=='d'&&e.n));
+      if(hit){if(st){runs.push({a:st,b:d-1,n:d-st,open:false});st=0}}else if(!st)st=d;
+    }
+    if(st)runs.push({a:st,b:d1,n:d1-st+1,open:ym===endK.slice(0,7)});
+    res.push({ym:ym,runs:runs});
+    mo++;if(mo>12){mo=1;y++}
+  }
+  return res;
+}
+function renderRa(){
+  var box=$('resR'),t=$('tR').value,min=+$('mR').value||4;
+  if(!lastLoaded()){box.innerHTML='<div class="empty">Aún no hay datos cargados.</div>';return}
+  var ms=rachasCalc(t),all=[];
+  ms.forEach(function(o){o.runs.forEach(function(r){if(r.n>=min)all.push({ym:o.ym,r:r})})});
+  var gn=grp==='1'?'Grupo 1':grp==='2'?'Grupo 2':'Los dos grupos',tn=t==='d'?'solo Día':t==='n'?'solo Noche':'Día y noche';
+  var h='<h2'+(grp==='0'?'':' class="gh g'+grp+'"')+'>'+gn+' · '+tn+'</h2>';
+  h+='<p class="sum">Días seguidos sin salir, contados dentro de cada mes. Se muestran las rachas de <b>'+min+' días o más</b>. El récord está al final.</p>';
+  var mx=all.length?Math.max.apply(null,all.map(function(x){return x.r.n})):0;
+  h+=ms.slice().reverse().map(function(o){
+    var rs=o.runs.filter(function(r){return r.n>=min});
+    var ch=rs.length?rs.map(function(r){return '<span class="rep'+(r.n===mx?' fu':'')+'">'+r.n+' días · '+(r.a===r.b?'día '+r.a:'del '+r.a+' al '+r.b)+(r.open?' · sigue':'')+'</span>'}).join(''):'<span class="mu" style="font-size:13px">Sin rachas de '+min+' días o más</span>';
+    return '<div class="hit st po" style="display:block"><div style="display:flex;justify-content:space-between;gap:8px;align-items:center"><b>'+mesCap(o.ym)+'</b><span class="mu">'+(rs.length?rs.length+(rs.length===1?' racha':' rachas'):'ninguna')+'</span></div><div style="margin-top:4px">'+ch+'</div></div>';
+  }).join('');
+  h+='<h2 style="margin-top:18px">Récord</h2>';
+  if(!all.length){h+='<p class="mu">Ninguna racha de '+min+' días o más con los datos actuales.</p>';box.innerHTML=h;return}
+  var cnt={},mons={};all.forEach(function(x){var n=x.r.n;cnt[n]=(cnt[n]||0)+1;(mons[n]=mons[n]||[]).push(x.ym)});
+  var ls=Object.keys(cnt).map(Number).sort(function(a,b){return a-b}),mn=ls[0];
+  var topL=ls.slice().sort(function(a,b){return cnt[b]-cnt[a]||a-b})[0];
+  var ocMx=all.filter(function(x){return x.r.n===mx}).map(function(x){return mesCap(x.ym)+' (del '+x.r.a+' al '+x.r.b+(x.r.open?', sigue':'')+')'});
+  h+='<div class="hit st fu" style="display:block"><b>Más larga: '+mx+' días</b><div class="mu" style="font-size:13px;margin-top:2px">'+ocMx.slice(0,6).join(' · ')+(ocMx.length>6?' · y '+(ocMx.length-6)+' más':'')+'</div></div>';
+  h+='<div class="hit st po" style="display:block"><b>Más corta que cuenta: '+mn+' días</b><div class="mu" style="font-size:13px;margin-top:2px">Pasó '+cnt[mn]+(cnt[mn]===1?' vez':' veces')+'.</div></div>';
+  h+='<div class="hit st po" style="display:block"><b>Cantidad que más se repite: '+topL+' días</b><div class="mu" style="font-size:13px;margin-top:2px">Pasó '+cnt[topL]+(cnt[topL]===1?' vez':' veces')+'.</div></div>';
+  h+='<p class="sum" style="margin-top:12px"><b>Cuántas veces se repite cada cantidad</b> ('+all.length+' rachas en total):</p>';
+  h+=ls.slice().reverse().map(function(L){var m=mons[L],u=[];m.forEach(function(x){if(u.indexOf(x)<0)u.push(x)});
+    return '<div class="hit st po" style="display:block"><div style="display:flex;justify-content:space-between;gap:8px;align-items:center"><span class="num">'+L+' días</span><span class="mu">'+cnt[L]+(cnt[L]===1?' vez':' veces')+'</span></div><div class="mu" style="font-size:13px;margin-top:2px">'+u.slice(0,8).map(mesCorto).join(', ')+(u.length>8?' y '+(u.length-8)+((u.length-8)===1?' mes más':' meses más'):'')+'</div></div>'}).join('');
+  box.innerHTML=h;
+}
+$('tR').addEventListener('change',renderRa);
+$('mR').addEventListener('change',renderRa);
+
 /* salen con */
 function renderCon(){
   var box=$('resC'),raw=$('qC').value.trim(),min=+$('mC').value||4;
@@ -1191,6 +1253,7 @@ function refrescaV(){
   if(cur==='combinado')renderComb();
   if(cur==='analisis')renderAna();
   if(cur==='salen')renderCon();
+  if(cur==='rachas')renderRa();
   if(cur==='prueba'&&!pBusy)$('resP').innerHTML='<div class="empty">Toca "Probar". Puede tardar unos segundos.</div>';
   if(cur==='datos')renderDatos();
 }
