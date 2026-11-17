@@ -129,8 +129,9 @@ h2{font:700 20px "Barlow Condensed","Arial Narrow",sans-serif;margin:0 0 8px}
 <button role="tab" data-t="salen" aria-selected="false">Salen con</button>
 <button role="tab" data-t="fecha" aria-selected="false">Fecha</button>
 <button role="tab" data-t="todos" aria-selected="false">Todos</button>
-<button role="tab" data-t="calientes" aria-selected="false">Días sin salir</button>
+<button role="tab" data-t="calientes" aria-selected="false">Números atrasados</button>
 <button role="tab" data-t="rachas" aria-selected="false">Rachas</button>
+<button role="tab" data-t="pron" aria-selected="false">Pronóstico de rachas</button>
 <button role="tab" data-t="combinado" aria-selected="false">Combinado</button>
 <button role="tab" data-t="analisis" aria-selected="false">Análisis</button>
 <button role="tab" data-t="prueba" aria-selected="false">Prueba</button>
@@ -221,6 +222,12 @@ h2{font:700 20px "Barlow Condensed","Arial Narrow",sans-serif;margin:0 0 8px}
 <details class="how"><summary><span>ℹ️ Cómo funciona y qué significa cada color</span></summary><p>Cuenta los días seguidos en que no salió ningún número del grupo que elegiste arriba (Grupo 1, Grupo 2 o Los dos). Cada mes se cuenta solo: una racha no pasa de un mes a otro, y en un mismo mes puede haber varias. Si un grupo no salió desde el día 1 hasta su primera salida del mes, o desde su última salida hasta fin de mes, también cuenta. En el mes actual se cuenta hasta hoy. Abajo está el récord: la racha más larga, la más corta que cuenta y cuántas veces se repite cada cantidad.</p><ul><li><span class="sw fu">Rojo</span><span>Racha igual a la más larga de todas (el récord).</span></li><li><span class="sw po">Gris</span><span>Las demás rachas.</span></li><li><span class="sw ne" style="color:var(--g1)">Turquesa</span><span>Grupo 1.</span></li><li><span class="sw ne" style="color:var(--g2)">Rosa</span><span>Grupo 2.</span></li></ul></details>
 <div class="card two"><div><label for="tR">Turno</label><select id="tR"><option value="a">Día y noche</option><option value="d">Solo día</option><option value="n">Solo noche</option></select></div><div><label for="mR">Mínimo de días</label><select id="mR"><option value="3">3</option><option value="4" selected>4</option><option value="5">5</option><option value="6">6</option><option value="7">7</option></select></div></div>
 <div class="card" id="resR"><div class="empty">Cargando…</div></div>
+</section>
+
+<section id="pron">
+<details class="how"><summary><span>ℹ️ Cómo funciona y qué significa cada color</span></summary><p>Usa las mismas rachas de la pestaña Rachas (días seguidos sin que salga ningún número del grupo que elegiste arriba, contados dentro de cada mes). Arriba dice cuántos días lleva la racha de hoy. Abajo hay una fila por cada cantidad de días: cuántas veces tu historia llegó a esa cantidad, y de esas cuántas veces el grupo salió al día siguiente, cuántas veces la racha siguió y cuántas se cortaron por fin de mes (ahí no se sabe). El porcentaje es solo sobre los casos donde sí se supo. Es un estudio de lo que pasó antes: no asegura lo que va a pasar.</p><ul><li><span class="sw fu">Rojo</span><span>La cantidad que es el récord de racha.</span></li><li><span class="sw de">Verde</span><span>Donde está tu racha de hoy.</span></li><li><span class="sw fa">Celeste</span><span>Cantidades a las que tu racha todavía no llega.</span></li><li><span class="sw po">Gris</span><span>Cantidades ya pasadas, o con menos de 5 casos (pocos datos).</span></li><li><span class="sw ne" style="color:var(--g1)">Turquesa</span><span>Grupo 1.</span></li><li><span class="sw ne" style="color:var(--g2)">Rosa</span><span>Grupo 2.</span></li></ul></details>
+<div class="card"><label for="tPr">Turno</label><select id="tPr"><option value="a">Día y noche</option><option value="d">Solo día</option><option value="n">Solo noche</option></select></div>
+<div class="card" id="resPr"><div class="empty">Cargando…</div></div>
 </section>
 
 <section id="analisis">
@@ -526,7 +533,7 @@ function show(t){
   if(t==='combinado')renderComb();
   if(t==='analisis')renderAna();
   if(t==='salen')renderCon();
-  if(t==='rachas')renderRa();
+  if(t==='rachas')renderRa();if(t==='pron')renderPr();
   if(t==='prueba'&&!pBusy)$('resP').innerHTML='<div class="empty">Toca "Probar". Puede tardar unos segundos.</div>';
   if(t==='mes')renderMes();
   if(t==='todos'){llenarFiltroT();renderTodos()}
@@ -1106,6 +1113,40 @@ function renderRa(){
 $('tR').addEventListener('change',renderRa);
 $('mR').addEventListener('change',renderRa);
 
+/* pronostico de rachas */
+function renderPr(){
+  var box=$('resPr'),t=$('tPr').value,MINC=5;
+  if(!lastLoaded()){box.innerHTML='<div class="empty">Aún no hay datos cargados.</div>';return}
+  var ms=rachasCalc(t),runs=[],cur=0,endK=ultK();
+  ms.forEach(function(o){var last=o.ym===endK.slice(0,7);o.runs.forEach(function(r){
+    if(last&&r.open){cur=r.n;return}
+    runs.push({n:r.n,hit:(r.b<new Date(+o.ym.slice(0,4),+o.ym.slice(5,7),0).getDate())})
+  })});
+  var gn=grp==='1'?'Grupo 1':grp==='2'?'Grupo 2':'Los dos grupos',tn=t==='d'?'solo Día':t==='n'?'solo Noche':'Día y noche';
+  var h='<h2'+(grp==='0'?'':' class="gh g'+grp+'"')+'>'+gn+' · '+tn+'</h2>';
+  var mx=runs.length?Math.max.apply(null,runs.map(function(r){return r.n})):0;
+  if(cur>mx)mx=cur;
+  h+='<div class="hit st '+(cur&&cur>=mx?'fu':cur?'de':'po')+'" style="display:block"><b>'+(cur?'Hoy lleva '+cur+(cur===1?' día':' días')+' sin salir':'Hoy no hay racha en curso')+'</b><div class="mu" style="font-size:13px;margin-top:2px">Hasta '+fmt(endK)+' (este mes). Récord de tu historia: '+mx+' días.</div></div>';
+  h+='<p class="sum" style="margin-top:10px">Cada fila: cuántas veces se llegó a esa cantidad de días sin salir y qué pasó después. Los días sin cargar cuentan como "no salió".</p>';
+  var any=false;
+  for(var N=1;N<=mx;N++){
+    var reach=runs.filter(function(r){return r.n>=N}).length;
+    if(!reach&&N!==cur)continue;
+    var sal=runs.filter(function(r){return r.n===N&&r.hit}).length,sig=runs.filter(function(r){return r.n>N}).length,cor=runs.filter(function(r){return r.n===N&&!r.hit}).length,sab=sal+sig;
+    var cl=N===mx&&mx>=4?'fu':N===cur?'de':N>cur?'fa':'po';if(reach<MINC&&cl==='po')cl='po';
+    if(N<3&&N!==cur)continue;
+    any=true;
+    h+='<div class="hit st '+cl+'" style="display:block"><div style="display:flex;justify-content:space-between;gap:8px;align-items:center"><span class="num">'+N+(N===1?' día':' días')+'</span><span class="mu">'+reach+(reach===1?' vez':' veces')+(reach<MINC?' · pocos datos':'')+'</span></div><div style="margin-top:4px">'
+     +(sab?'<span class="rep">Salió al día '+(N+1)+' ×'+sal+'</span><span class="rep">Siguió ×'+sig+'</span>':'')
+     +(cor?'<span class="rep">Se cortó por fin de mes ×'+cor+'</span>':'')
+     +(sab?'<span class="rep po">'+Math.round(100*sal/sab)+'% salió ('+sab+' casos)</span>':'<span class="mu" style="font-size:13px">Sin casos para saber qué pasó después.</span>')
+     +(N===cur?'<span class="rep de">← aquí vas hoy</span>':'')+'</div></div>';
+  }
+  if(!any)h+='<p class="mu">Con los datos actuales no hay rachas para mostrar.</p>';
+  box.innerHTML=h;
+}
+$('tPr').addEventListener('change',renderPr);
+
 /* salen con */
 function renderCon(){
   var box=$('resCon'),raw=$('qC').value.trim(),min=+$('mC').value||4;
@@ -1253,7 +1294,7 @@ function refrescaV(){
   if(cur==='combinado')renderComb();
   if(cur==='analisis')renderAna();
   if(cur==='salen')renderCon();
-  if(cur==='rachas')renderRa();
+  if(cur==='rachas')renderRa();if(cur==='pron')renderPr();
   if(cur==='prueba'&&!pBusy)$('resP').innerHTML='<div class="empty">Toca "Probar". Puede tardar unos segundos.</div>';
   if(cur==='datos')renderDatos();
 }
