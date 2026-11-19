@@ -157,6 +157,7 @@ h2{font:700 20px "Barlow Condensed","Arial Narrow",sans-serif;margin:0 0 8px}
 <button class="btn alt" id="hoyBtn" style="margin-top:8px">Ir a hoy</button>
 <p class="msg" id="msg1" aria-live="polite"></p>
 </div>
+<div class="card"><h2>Resultados de internet</h2><p class="mu" style="font-size:14px;margin:0 0 8px">Trae de internet los resultados nuevos del Pick 3 de Florida (los dos últimos dígitos) y te los muestra. No se guarda nada hasta que tú lo confirmes.</p><button class="btn alt" id="netU">Traer resultados nuevos</button><div id="netUr"></div></div>
 <div class="card"><h2>Últimos registros</h2><div id="ultimos"></div></div>
 </section>
 
@@ -269,6 +270,7 @@ h2{font:700 20px "Barlow Condensed","Arial Narrow",sans-serif;margin:0 0 8px}
 <section id="datos">
 <details class="how"><summary><span>ℹ️ Cómo funciona y qué significa cada color</span></summary><p>Aquí sacas tu copia de seguridad (en texto o como archivo) y puedes importar números. Tus datos están solo en este teléfono. Los días vacíos son normales: cuentan como que no salió ningún número del grupo que estudies. La app solo avisa si un mes tiene muy pocos días cargados.</p><ul><li><span class="sw de">Verde</span><span>Todo al día.</span></li><li><span class="sw fu">Rojo</span><span>Aviso o error al guardar o importar.</span></li></ul></details>
 <div class="card"><h2>Grupos 3 y 4: fechas cargadas</h2><p class="mu" style="font-size:14px;margin:0 0 8px">Pon de qué día a qué día ya tienes cargados <b>todos</b> los números (de cualquier grupo). Los estudios de Grupo 3, Grupo 4 y Los cuatro usan solo ese tramo, para no contar como "no salió" los días que todavía no cargaste. Mientras cargas poco a poco, ve ampliando el tramo.</p><div class="card two" style="box-shadow:none;padding:0;border:0;background:none"><div><label for="d34a">Desde</label><input type="date" id="d34a"></div><div><label for="d34b">Hasta</label><input type="date" id="d34b"></div></div><button class="btn" id="d34s" style="margin-top:8px">Guardar fechas</button><button class="btn alt" id="d34t" style="margin-top:8px">Usar todos mis días cargados</button><p class="msg" id="d34m" aria-live="polite"></p></div>
+<div class="card"><h2>Traer el historial de internet</h2><p class="mu" style="font-size:14px;margin:0 0 8px">Trae de internet los resultados del Pick 3 de Florida (los dos últimos dígitos), los compara con los números que ya tienes y te dice cuántos coinciden. Después puedes llenar <b>solo las casillas vacías</b>; lo que ya tienes no se cambia. Así los grupos 3 y 4 se cargan solos. Puede tardar un minuto. Antes de llenar, saca una copia de seguridad.</p><label for="netA">Desde</label><input type="date" id="netA" value="2022-01-01"><button class="btn" id="netH" style="margin-top:8px">Traer y comparar</button><div id="netHr"></div></div>
 <div class="card"><h2>Tus datos</h2><p class="mu" style="font-size:14px;margin:0 0 8px">Esta app guarda tus números <b>solo en este teléfono</b>. No se suben a ningún sitio. Para no perderlos, saca una copia de seguridad cada cierto tiempo.</p><p id="syncSt" style="font-size:14px;margin:0 0 6px"></p><p class="mu" id="cobSt" style="font-size:13px;margin:6px 0 0"></p></div>
 <div class="card">
 <h2>Copia de seguridad</h2>
@@ -1512,6 +1514,111 @@ function pintaD34(){var R=d34();if(R){$('d34a').value=R.a;$('d34b').value=R.b;sa
 $('d34s').addEventListener('click',function(){var a=$('d34a').value,b=$('d34b').value;if(!validKey(a)||!validKey(b)||a>b){say('d34m','Revisa las fechas: "Desde" debe ser anterior o igual a "Hasta".','err');return}try{localStorage.setItem('bolita:d34',JSON.stringify({a:a,b:b}))}catch(e){say('d34m','No se pudo guardar en este navegador.','err');return}pintaD34();setGrp(grp,true);buildV();refrescaV()});
 $('d34t').addEventListener('click',function(){var ks=Object.keys(data).sort();if(!ks.length){say('d34m','Aún no hay datos cargados.','err');return}$('d34a').value=ks[0];$('d34b').value=ks[ks.length-1];$('d34s').click()});
 function sinRango(box){if(lim()&&!d34()){box.innerHTML='<div class="empty">Para estudiar este grupo, primero pon en la pestaña Datos desde y hasta qué fecha lo tienes cargado.</div>';return true}return false}
+
+/* resultados de internet (Florida Pick 3, fuente: DrawAnalytics) */
+var NETURL='https://www.drawanalytics.com/api/v1/florida/fl_pick3/results',netBusy=false,netUP=null,netHP=null;
+function netPide(url,cb,fail){
+  var done=false,t=setTimeout(function(){if(!done){done=true;fail('Tardó demasiado en responder.')}},20000);
+  function ko(m){if(done)return;done=true;clearTimeout(t);fail(m)}
+  try{fetch(url).then(function(r){if(!r.ok)throw new Error('Respuesta '+r.status);return r.json()}).then(function(j){if(done)return;done=true;clearTimeout(t);cb(j)}).catch(function(e){ko('No se pudo conectar con el servicio ('+((e&&e.message)||'sin conexión')+').')})}catch(e){ko('Este navegador no pudo hacer la consulta.')}
+}
+function netTrae(start,prog,ok,fail){
+  var net={},off=0,pages=0;
+  function paso(){
+    pages++;if(pages>60){fail('Demasiadas páginas.');return}
+    netPide(NETURL+'?start_date='+start+'&limit=100&offset='+off+'&_='+Date.now(),function(j){
+      if(!j||!Array.isArray(j.data)){fail('La respuesta no tiene el formato esperado.');return}
+      j.data.forEach(function(r){
+        var k=r&&r.draw_date,n=r&&r.numbers,t=r&&(r.draw_time==='midday'?'d':r.draw_time==='evening'?'n':null);
+        if(!k||!validKey(k)||!t||!Array.isArray(n)||n.length!==3)return;
+        var v=''+n[1]+n[2];if(!/^\d\d$/.test(v))return;
+        (net[k]=net[k]||{})[t]=v;
+      });
+      var total=j.meta&&typeof j.meta.total==='number'?j.meta.total:null;
+      off+=j.data.length;
+      if(prog)prog(total?Math.min(100,Math.round(100*off/total)):null);
+      if(!j.data.length||j.data.length<100||(total!==null&&off>=total)){ok(net);return}
+      setTimeout(paso,300);
+    },fail);
+  }
+  paso();
+}
+function netPlan(net){
+  var add=[],same=0,diff=[],ks=Object.keys(net).sort();
+  ks.forEach(function(k){['d','n'].forEach(function(t){var v=net[k][t];if(!v)return;var e=data[k]||{},cur=e[t];
+    if(!cur)add.push({k:k,t:t,v:v});else if(cur===v)same++;else diff.push({k:k,t:t,mine:cur,net:v})})});
+  return {add:add,same:same,diff:diff,ks:ks,net:net};
+}
+function netAplica(items){
+  items.forEach(function(x){var e=data[x.k];if(!e){e={d:null,n:null};data[x.k]=e}e[x.t]=x.v;if(e.d===undefined)e.d=null;if(e.n===undefined)e.n=null});
+  return save();
+}
+function netTn(t){return t==='d'?'Día':'Noche'}
+function netFilas(add){
+  var by={},ks=[];add.forEach(function(x){if(!by[x.k]){by[x.k]={};ks.push(x.k)}by[x.k][x.t]=x.v});
+  ks.sort().reverse();
+  return ks.map(function(k){var e=by[k];return '<div class="hit st po" style="display:block"><b>'+fmt(k)+'</b> · '+(e.d?'Día <span class="num">'+e.d+'</span>':'')+(e.d&&e.n?' · ':'')+(e.n?'Noche <span class="num">'+e.n+'</span>':'')+'</div>'}).join('');
+}
+function netRefresca(){renderUltimos();fillFields();renderDatos();pintaD34();setGrp(grp,true);refrescaV()}
+function netErr(box,m){netBusy=false;box.innerHTML='<p class="msg err">'+m+' Puedes cargar a mano como siempre.</p>'}
+/* diario */
+$('netU').addEventListener('click',function(){
+  if(netBusy)return;var box=$('netUr'),ll=lastLoaded(),t0=shiftDay(iso(new Date()),-7),st=ll&&shiftDay(ll,-1)<t0?shiftDay(ll,-1):t0;
+  netBusy=true;box.innerHTML='<p class="mu">Buscando resultados…</p>';
+  netTrae(st,null,function(net){
+    netBusy=false;var pl=netPlan(net);netUP=pl;
+    var h='';
+    if(!pl.ks.length){box.innerHTML='<p class="mu">El servicio no devolvió resultados nuevos.</p>';return}
+    if(!pl.add.length)h+='<p class="msg ok">Ya tienes todo al día ('+pl.same+' resultados revisados).</p>';
+    else h+='<p class="sum" style="margin-top:8px"><b>'+pl.add.length+' resultados nuevos</b> para guardar. Revisa que sean los de Florida:</p>'+netFilas(pl.add)+'<button class="btn" id="netUg" style="margin-top:8px">Guardar estos '+pl.add.length+'</button>';
+    if(pl.diff.length)h+='<p class="msg err">Ojo: '+pl.diff.length+' no coinciden con lo que ya tienes. Por ejemplo '+fmt(pl.diff[0].k)+' '+netTn(pl.diff[0].t)+': tú '+pl.diff[0].mine+', internet '+pl.diff[0].net+'. No se cambia nada; revísalo.</p>';
+    box.innerHTML=h;
+  },function(m){netErr(box,m)});
+});
+$('netUr').addEventListener('click',function(e){
+  if(!e.target||e.target.id!=='netUg'||!netUP)return;
+  var ok=netAplica(netUP.add),n=netUP.add.length;netUP=null;
+  if(!ok){$('netUr').innerHTML='<p class="msg err">No se pudo guardar en este navegador.</p>';return}
+  var R=d34(),ext='';if(R){var kk=shiftDay(R.b,1),nb=R.b;while(kk<=iso(new Date())&&data[kk]&&data[kk].d&&data[kk].n){nb=kk;kk=shiftDay(kk,1)}if(nb!==R.b){try{localStorage.setItem('bolita:d34',JSON.stringify({a:R.a,b:nb}));ext=' Las fechas de estudio ahora llegan hasta el '+fmt(nb)+'.'}catch(er){}}}
+  netRefresca();$('netUr').innerHTML='<p class="msg ok">Guardados '+n+' resultados.'+ext+'</p>';
+});
+/* historial */
+$('netH').addEventListener('click',function(){
+  if(netBusy)return;var box=$('netHr'),a=$('netA').value;
+  if(!validKey(a)){box.innerHTML='<p class="msg err">Pon una fecha válida en "Desde".</p>';return}
+  netBusy=true;box.innerHTML='<p class="mu" id="netPg">Trayendo el historial… 0 %</p>';
+  netTrae(a,function(p){var e=$('netPg');if(e&&p!==null)e.textContent='Trayendo el historial… '+p+' %'},function(net){
+    netBusy=false;var pl=netPlan(net);netHP=pl;
+    if(!pl.ks.length){box.innerHTML='<p class="mu">El servicio no devolvió resultados para esas fechas.</p>';return}
+    var comp=pl.same+pl.diff.length,pct=comp?100*pl.same/comp:null,nt=0;pl.ks.forEach(function(k){['d','n'].forEach(function(t){if(pl.net[k][t])nt++})});
+    var g=[0,0,0,0,0];pl.add.forEach(function(x){g[grupo(x.v)]++});
+    var h='<p class="sum" style="margin-top:8px">Se revisaron <b>'+nt+' resultados</b>, del '+fmt(pl.ks[0])+' al '+fmt(pl.ks[pl.ks.length-1])+'.</p>';
+    if(comp)h+='<div class="hit st '+(pct>=97?'de':'fu')+'" style="display:block"><b>Coinciden con lo que ya tenías: '+pl.same+' de '+comp+' ('+pct.toFixed(1).replace('.0','')+' %)</b><div class="mu" style="font-size:13px;margin-top:2px">'+(pct>=97?'La fuente se ve confiable.':'Coinciden pocos: no recomiendo llenar con esta fuente hasta revisar las diferencias.')+'</div></div>';
+    else h+='<p class="mu">No hay números tuyos en esas fechas para comparar.</p>';
+    h+='<div class="hit st po" style="display:block"><b>Casillas vacías que se pueden llenar: '+pl.add.length+'</b><div class="mu" style="font-size:13px;margin-top:2px">Grupo 1: '+g[1]+' · Grupo 2: '+g[2]+' · Grupo 3: '+g[3]+' · Grupo 4: '+g[4]+'</div></div>';
+    if(pl.add.length)h+='<button class="btn" id="netHg" style="margin-top:8px">Llenar las '+pl.add.length+' casillas vacías</button>';
+    if(pl.diff.length){h+='<h2 style="margin-top:14px">No coinciden ('+pl.diff.length+')</h2><p class="sum mu">Tú tienes un número y internet otro. No se cambian solos.</p>'+pl.diff.slice(0,15).map(function(x){return '<div class="hit st fu" style="display:block"><b>'+fmt(x.k)+'</b> · '+netTn(x.t)+': tú <span class="num">'+x.mine+'</span> · internet <span class="num">'+x.net+'</span></div>'}).join('')+(pl.diff.length>15?'<p class="mu">…y '+(pl.diff.length-15)+' más.</p>':'')+'<button class="btn alt" id="netHc" style="margin-top:8px">Usar el de internet en estas '+pl.diff.length+'</button>'}
+    box.innerHTML=h;
+  },function(m){netErr(box,m)});
+});
+$('netHr').addEventListener('click',function(e){
+  var id=e.target&&e.target.id,pl=netHP,box=$('netHr');if(!pl)return;
+  if(id==='netHg'){
+    var n=pl.add.length;if(!netAplica(pl.add)){box.innerHTML='<p class="msg err">No se pudo guardar en este navegador.</p>';return}
+    var ks=pl.ks,a=ks[0],b=null,i,falta=0;
+    for(i=ks.length-1;i>=0;i--){if(pl.net[ks[i]].d&&pl.net[ks[i]].n){b=ks[i];break}}
+    var msg='Llenadas '+n+' casillas.';
+    if(b&&a<=b){try{localStorage.setItem('bolita:d34',JSON.stringify({a:a,b:b}));msg+=' Fechas de estudio de los grupos 3 y 4: del '+fmt(a)+' al '+fmt(b)+'.'}catch(er){}
+      diasRango(a,b).forEach(function(k){var e=data[k]||{};if(!e.d)falta++;if(!e.n)falta++});
+      if(falta)msg+=' Ojo: quedan '+falta+' turnos sin número en ese tramo.'}
+    netHP=null;netRefresca();box.innerHTML='<p class="msg ok">'+msg+'</p>';
+  }else if(id==='netHc'){
+    var bt=e.target;if(!bt.dataset.sure){bt.dataset.sure='1';bt.textContent='Toca otra vez para confirmar el cambio';return}
+    var items=pl.diff.map(function(x){return {k:x.k,t:x.t,v:x.net}}),n2=items.length;
+    if(!netAplica(items)){box.innerHTML='<p class="msg err">No se pudo guardar en este navegador.</p>';return}
+    netHP=null;netRefresca();box.innerHTML='<p class="msg ok">Corregidos '+n2+' números con los de internet.</p>';
+  }
+});
 
 /* inicio */
 load();
