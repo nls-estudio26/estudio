@@ -136,6 +136,8 @@ h2{font:700 20px "Barlow Condensed","Arial Narrow",sans-serif;margin:0 0 8px}
 <button role="tab" data-t="term" aria-selected="false">Terminales y líneas</button>
 <button role="tab" data-t="comp" aria-selected="false">Comparar grupos</button>
 <button role="tab" data-t="rango" aria-selected="false">Rango 25 al 75</button>
+<button role="tab" data-t="det" aria-selected="false">Detalles por grupo</button>
+<button role="tab" data-t="resul" aria-selected="false">Resultado final</button>
 <button role="tab" data-t="combinado" aria-selected="false">Combinado</button>
 <button role="tab" data-t="analisis" aria-selected="false">Análisis</button>
 <button role="tab" data-t="prueba" aria-selected="false">Prueba</button>
@@ -251,6 +253,18 @@ h2{font:700 20px "Barlow Condensed","Arial Narrow",sans-serif;margin:0 0 8px}
 <details class="how"><summary><span>ℹ️ Cómo funciona y qué significa cada color</span></summary><p>Estudia los números del 25 al 75 (51 números, de todos los grupos) con los días que pusiste en Datos. Dice cuántas veces salió ese rango contra lo esperado (51 % por turno). Luego muestra, para cada número, cuántos días lleva sin salir comparado con su rango normal. Después mide los días seguidos en que no salió ningún número del rango (dentro del mes), y qué hicieron los 4 grupos después de esas rachas. Los días vacíos cuentan como que no salió.</p><ul><li><span class="sw fu">Rojo</span><span>Número fuera de su rango normal (atrasado).</span></li><li><span class="sw de">Verde</span><span>Dentro de su rango normal.</span></li><li><span class="sw fa">Celeste</span><span>Todavía no llega a su rango normal.</span></li><li><span class="sw po">Gris</span><span>Pocos datos.</span></li><li><span class="sw ne" style="color:var(--g1)">Turquesa</span><span>Grupo 1.</span></li><li><span class="sw ne" style="color:var(--g2)">Rosa</span><span>Grupo 2.</span></li><li><span class="sw ne" style="color:var(--g3)">Violeta</span><span>Grupo 3.</span></li><li><span class="sw ne" style="color:var(--g4)">Café</span><span>Grupo 4.</span></li></ul></details>
 <div class="card two"><div><label for="tRg">Turno</label><select id="tRg"><option value="a">Día y noche</option><option value="d">Solo día</option><option value="n">Solo noche</option></select></div><div><label for="nRg">Racha mínima (días)</label><select id="nRg"><option value="2">2</option><option value="3" selected>3</option><option value="4">4</option><option value="5">5</option><option value="6">6</option></select></div></div>
 <div class="card" id="resRg"><div class="empty">Cargando…</div></div>
+</section>
+
+<section id="det">
+<details class="how"><summary><span>ℹ️ Cómo funciona y qué significa cada color</span></summary><p>Mira los detalles finos de los 4 grupos con los días que pusiste en Datos. Para cada día de la semana y cada mes dice qué porcentaje de los sorteos fue de cada grupo (lo normal es 25 % cada uno). Marca el grupo que más sale y en qué años fue el que más salió, para ver si se repite o fue de un solo año. Abajo mira qué grupo sale en la noche según el que salió de día, y qué sale de día según el grupo de la noche anterior (esas dos no dependen del turno que elijas). Solo cuenta lo que ya pasó. Con pocos sorteos en un año (menos de 8) ese año no se cuenta.</p><ul><li><span class="sw de">Verde</span><span>Se repite: el grupo fue el que más salió los últimos 3 años o más.</span></li><li><span class="sw fa">Celeste</span><span>Fue el que más salió los últimos 2 años.</span></li><li><span class="sw po">Gris</span><span>Solo 1 año, o se cortó (ya no es el que más sale), o ningún año.</span></li><li><span class="sw ne" style="color:var(--g1)">Turquesa</span><span>Grupo 1.</span></li><li><span class="sw ne" style="color:var(--g2)">Rosa</span><span>Grupo 2.</span></li><li><span class="sw ne" style="color:var(--g3)">Violeta</span><span>Grupo 3.</span></li><li><span class="sw ne" style="color:var(--g4)">Café</span><span>Grupo 4.</span></li></ul></details>
+<div class="card"><label for="tDe">Turno</label><select id="tDe"><option value="a">Día y noche</option><option value="d">Solo día</option><option value="n">Solo noche</option></select></div>
+<div class="card" id="resDe"><div class="empty">Cargando…</div></div>
+</section>
+
+<section id="resul">
+<details class="how"><summary><span>ℹ️ Cómo funciona y qué significa cada color</span></summary><p>Junta todos los estudios de la app para la fecha que elijas y te da solo los números de cada uno de los 4 grupos. Para cada grupo mira estas señales: números atrasados, bloque de 5 días, mismo día del mes, misma fecha en otros años, números que salen juntos, estimado de repetición, y terminales o líneas atrasadas. Los números que juntan más señales salen primero. Por defecto es el próximo día a cargar. Son números para observar y estudiar: no aseguran que salgan.</p><ul><li><span class="sw ne" style="color:var(--g1)">Turquesa</span><span>Grupo 1.</span></li><li><span class="sw ne" style="color:var(--g2)">Rosa</span><span>Grupo 2.</span></li><li><span class="sw ne" style="color:var(--g3)">Violeta</span><span>Grupo 3.</span></li><li><span class="sw ne" style="color:var(--g4)">Café</span><span>Grupo 4.</span></li></ul></details>
+<div class="card two" style="grid-template-columns:1.3fr 1fr 1fr"><div><label for="fRs">Fecha</label><input type="date" id="fRs"></div><div><label for="tRs">Turno</label><select id="tRs"><option value="a">Día y noche</option><option value="d">Solo día</option><option value="n">Solo noche</option></select></div><div><label for="nRs">Cuántos</label><select id="nRs"><option value="3">3</option><option value="5" selected>5</option><option value="8">8</option><option value="10">10</option></select></div></div>
+<div class="card" id="resRs"><div class="empty">Cargando…</div></div>
 </section>
 
 <section id="analisis">
@@ -562,7 +576,7 @@ function show(t){
   if(t==='combinado')renderComb();
   if(t==='analisis')renderAna();
   if(t==='salen')renderCon();
-  if(t==='rachas')renderRa();if(t==='pron')renderPr();if(t==='term')renderTe();if(t==='comp')renderCo();if(t==='rango')renderRg();
+  if(t==='rachas')renderRa();if(t==='pron')renderPr();if(t==='term')renderTe();if(t==='comp')renderCo();if(t==='rango')renderRg();if(t==='det')renderDe();if(t==='resul')renderRs();
   if(t==='prueba'&&!pBusy)$('resP').innerHTML='<div class="empty">Toca "Probar". Puede tardar unos segundos.</div>';
   if(t==='mes')renderMes();
   if(t==='todos'){llenarFiltroT();renderTodos()}
@@ -1307,6 +1321,102 @@ function renderCo(){
 $('tCo').addEventListener('change',renderCo);$('nCo').addEventListener('change',renderCo);
 
 /* rango 25 al 75 */
+function renderDe(){
+  var box=$('resDe'),t=$('tDe').value,R=d34();
+  if(!R){box.innerHTML='<div class="empty">Primero pon en la pestaña Datos desde y hasta qué fecha tienes cargados los grupos 3 y 4. Esta pestaña usa los 4 grupos.</div>';return}
+  var days=diasRango(R.a,R.b),G=[1,2,3,4],WD=['Lunes','Martes','Miércoles','Jueves','Viernes','Sábado','Domingo'],MN=['Enero','Febrero','Marzo','Abril','Mayo','Junio','Julio','Agosto','Septiembre','Octubre','Noviembre','Diciembre'];
+  var wdR=[],moR=[],dnR=[],ndR=[],prev=0;
+  days.forEach(function(k){
+    var e=data[k]||{},y=+k.slice(0,4),dt=new Date(k+'T12:00:00'),w=(dt.getDay()+6)%7,m=dt.getMonth();
+    var gd=grupo(e.d),gn=grupo(e.n);
+    if(t!=='n'&&gd){wdR.push({k:w,y:y,g:gd});moR.push({k:m,y:y,g:gd})}
+    if(t!=='d'&&gn){wdR.push({k:w,y:y,g:gn});moR.push({k:m,y:y,g:gn})}
+    if(gd&&gn)dnR.push({k:gd,y:y,g:gn});
+    if(prev&&gd)ndR.push({k:prev,y:y,g:gd});
+    prev=gn||0;
+  });
+  function estado(yl,L){
+    var ys=Object.keys(yl).sort(),led=ys.map(function(y){return yl[y].indexOf(L)>=0}),cnt=0,tail=0,i;
+    led.forEach(function(x){if(x)cnt++});
+    for(i=led.length-1;i>=0&&led[i];i--)tail++;
+    var yrs=ys.filter(function(y,j){return led[j]}).join(', '),tyr=ys.slice(ys.length-tail).join(', ');
+    if(!ys.length)return{c:'po',t:'Pocos datos'};
+    if(tail>=3)return{c:'de',t:'Se repite: es el que más sale los últimos '+tail+' años seguidos ('+tyr+')'};
+    if(tail===2)return{c:'fa',t:'Solo los dos últimos años ('+tyr+')'};
+    if(cnt===0)return{c:'po',t:'No fue el que más salió ningún año'};
+    if(cnt===1)return{c:'po',t:'Solo 1 año ('+yrs+')'};
+    if(tail===1)return{c:'fa',t:'El último año y otros antes, no seguidos ('+yrs+')'};
+    return{c:'po',t:'Se cortó: fue el que más salió en '+yrs+', pero no el último año'};
+  }
+  function analiza(recs,key){
+    var tot={1:0,2:0,3:0,4:0},py={},n=0;
+    recs.forEach(function(r){if(r.k!==key)return;tot[r.g]++;n++;py[r.y]=py[r.y]||{1:0,2:0,3:0,4:0,n:0};py[r.y][r.g]++;py[r.y].n++});
+    var L=1,Lo=1,mx=-1,mn=1e9;
+    G.forEach(function(g){if(tot[g]>mx){mx=tot[g];L=g}if(tot[g]<mn){mn=tot[g];Lo=g}});
+    var yl={};
+    Object.keys(py).forEach(function(y){var o=py[y];if(o.n<8)return;var m=Math.max(o[1],o[2],o[3],o[4]);yl[y]=G.filter(function(g){return o[g]===m})});
+    return{tot:tot,n:n,L:L,Lo:Lo,es:n<40?{c:'po',t:'Pocos datos ('+n+' sorteos)'}:estado(yl,L)};
+  }
+  function fila(titulo,a,extra){
+    var h='<div class="hit st '+a.es.c+'" style="display:block"><b>'+titulo+'</b>'+(extra||'')+'<div style="margin-top:6px">';
+    G.forEach(function(g){var pr=a.n?Math.round(100*a.tot[g]/a.n):0;h+='<span class="rep"><span class="num g'+g+'" style="font-size:inherit">G'+g+'</span> '+(g===a.L?'<b>'+pr+' %</b>':pr+' %')+'</span>'});
+    h+='</div><div class="mu" style="font-size:13px;margin-top:2px">Más sale: <b class="num g'+a.L+'" style="font-size:inherit">G'+a.L+'</b> · Menos sale: <b class="num g'+a.Lo+'" style="font-size:inherit">G'+a.Lo+'</b> · '+a.es.t+'</div></div>';
+    return h;
+  }
+  var tn=t==='d'?'solo Día':t==='n'?'solo Noche':'Día y noche',now=new Date(),hw=(now.getDay()+6)%7,hm=now.getMonth(),h='';
+  h+='<h2>Detalles por grupo · '+tn+'</h2><p class="sum">Del '+fmt(R.a)+' al '+fmt(R.b)+' ('+dd(days.length)+'). Lo normal es 25 % cada grupo.</p>';
+  h+='<h2 style="margin-top:14px">Por día de la semana</h2>';
+  WD.forEach(function(nm,i){h+=fila(nm,analiza(wdR,i),i===hw?' <span class="mu" style="font-size:13px">← hoy</span>':'')});
+  h+='<h2 style="margin-top:18px">Por mes</h2>';
+  MN.forEach(function(nm,i){h+=fila(nm,analiza(moR,i),i===hm?' <span class="mu" style="font-size:13px">← este mes</span>':'')});
+  h+='<h2 style="margin-top:18px">Qué sale en la noche según el grupo que salió de Día (el mismo día)</h2>';
+  G.forEach(function(g){h+=fila('Si de Día salió el Grupo '+g,analiza(dnR,g))});
+  h+='<h2 style="margin-top:18px">Qué sale de Día según el grupo que salió la Noche anterior</h2>';
+  G.forEach(function(g){h+=fila('Si la noche anterior salió el Grupo '+g,analiza(ndR,g))});
+  box.innerHTML=h;
+}
+$('tDe').addEventListener('change',renderDe);
+var rsTouched=false;
+function rsExtra(r,T,t){
+  var ks=Object.keys(V).sort(),u=shiftDay(T,-1),aT={},aL={},i;
+  ks.forEach(function(k){
+    var e=V[k],seenT={},seenL={};
+    [t!=='n'?e.d:null,t!=='d'?e.n:null].forEach(function(v){
+      if(!v)return;
+      var tt=v.charAt(1),ll=v.charAt(0);
+      if(!seenT[tt]){seenT[tt]=1;(aT[tt]=aT[tt]||[]).push(k)}
+      if(!seenL[ll]){seenL[ll]=1;(aL[ll]=aL[ll]||[]).push(k)}
+    });
+  });
+  function atras(m){var l=[];Object.keys(m).forEach(function(d){var st=calSt(m[d],u);if(st&&st.s==='a'){st.r=st.lv/Math.max(1,st.hi);l.push({d:d,r:st.r})}});l.sort(function(a,b){return b.r-a.r});var o={};l.slice(0,3).forEach(function(x){o[x.d]=1});return o}
+  var tA=atras(aT),lA=atras(aL);
+  r.items.forEach(function(o){
+    if(tA[o.q.charAt(1)])o.sg.push('Terminal '+o.q.charAt(1)+' atrasada');
+    if(lA[o.q.charAt(0)])o.sg.push('Línea '+o.q.charAt(0)+' atrasada');
+  });
+}
+function renderRs(){
+  var box=$('resRs'),t=$('tRs').value,N=+$('nRs').value||5,R=d34(),ll=lastLoaded();
+  if(!R){box.innerHTML='<div class="empty">Primero pon en la pestaña Datos desde y hasta qué fecha tienes cargados los grupos 3 y 4. Esta pestaña usa los 4 grupos.</div>';return}
+  if(!ll){box.innerHTML='<div class="empty">Aún no hay datos cargados.</div>';return}
+  if(!rsTouched||!validKey($('fRs').value))$('fRs').value=(shiftDay(ll,1)>ultK())?shiftDay(ll,1):ultK();
+  var T=$('fRs').value,keep=grp,h='';
+  try{
+    [1,2,3,4].forEach(function(g){
+      grp=String(g);buildV();
+      var r=anaCalc(T,t),top=[];
+      if(r){
+        rsExtra(r,T,t);
+        top=r.items.filter(function(o){return o.sg.length>=1}).sort(function(a,b){return b.sg.length-a.sg.length||((b.st&&b.st.s==='a'?b.st.r:0)-(a.st&&a.st.s==='a'?a.st.r:0))||b.c-a.c||(a.q<b.q?-1:1)}).slice(0,N);
+      }
+      h+='<h2 class="gh g'+g+'">Grupo '+g+'</h2><div style="line-height:1.15">'+(top.length?top.map(function(o){return '<span class="num" style="font-size:40px;margin:0 16px 4px 0;display:inline-block">'+o.q+'</span>'}).join(''):'<span class="mu">—</span>')+'</div>';
+    });
+  }catch(e){h='<div class="empty">No se pudo completar el análisis.</div>'}
+  grp=keep;buildV();
+  box.innerHTML=h;
+}
+$('fRs').addEventListener('change',function(){rsTouched=true;renderRs()});
+$('tRs').addEventListener('change',renderRs);$('nRs').addEventListener('change',renderRs);
 function renderRg(){
   var box=$('resRg'),t=$('tRg').value,N=+$('nRg').value||3,R=d34();
   if(!R){box.innerHTML='<div class="empty">Primero pon en la pestaña Datos desde y hasta qué fecha tienes cargados los grupos 3 y 4. El rango 25 al 75 usa números de los 4 grupos.</div>';return}
@@ -1494,7 +1604,7 @@ function refrescaV(){
   if(cur==='combinado')renderComb();
   if(cur==='analisis')renderAna();
   if(cur==='salen')renderCon();
-  if(cur==='rachas')renderRa();if(cur==='pron')renderPr();if(cur==='term')renderTe();if(cur==='comp')renderCo();if(cur==='rango')renderRg();
+  if(cur==='rachas')renderRa();if(cur==='pron')renderPr();if(cur==='term')renderTe();if(cur==='comp')renderCo();if(cur==='rango')renderRg();if(cur==='det')renderDe();if(cur==='resul')renderRs();
   if(cur==='prueba'&&!pBusy)$('resP').innerHTML='<div class="empty">Toca "Probar". Puede tardar unos segundos.</div>';
   if(cur==='datos')renderDatos();
 }
